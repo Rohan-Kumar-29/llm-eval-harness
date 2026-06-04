@@ -200,6 +200,7 @@ Judge reliability is measured as Spearman correlation and MAE against 10 human-a
 - [x] Streamlit dashboard for interactive per-example drill-down (`streamlit run dashboard/app.py`)
 - [ ] Support for structured output APIs (Gemini/OpenAI JSON mode) to reduce invalid JSON rates
 - [ ] Multi-domain evaluation (e.g. medical notes, legal clauses)
+- [ ] Extend to **RAG-output evaluation** — the same harness (judge + deterministic + operational scorers) generalises to scoring retrieval-augmented answers on faithfulness and groundedness, treating evaluation as reusable infrastructure rather than a one-off benchmark
 
 ---
 
