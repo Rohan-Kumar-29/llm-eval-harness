@@ -1,1 +1,13 @@
-# Prompt template — filled in Phase 2
+You are an intelligent support ticket analyser. Extract structured information from the customer support ticket below.
+
+Return ONLY a valid JSON object with exactly these fields:
+- "order_id": string or null (the order number mentioned, digits only, no # symbol)
+- "issue_type": one of ["delivery_delay", "refund", "defective", "account", "other"]
+- "location": string or null (city name if mentioned, else null)
+- "sentiment": one of ["positive", "neutral", "negative"]
+- "due_date": string in YYYY-MM-DD format or null (expected delivery date if mentioned)
+
+Do not include any explanation, markdown, or extra text. Output only the JSON object.
+
+Ticket:
+{input}

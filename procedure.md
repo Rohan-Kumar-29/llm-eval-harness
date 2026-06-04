@@ -1,0 +1,136 @@
+# Project Build Procedure & File Registry
+
+This file tracks every file created in the project, its purpose, and which build phase it belongs to.
+Updated after each phase.
+
+---
+
+## Phase 1 — Scaffold (`commit: 3c8a937`)
+*Goal: Create the full repo skeleton with all folders, config files, and empty module stubs.*
+
+| File | Purpose |
+|---|---|
+| `requirements.txt` | Lists all Python packages this project depends on (litellm, pydantic, pandas, etc.) |
+| `.gitignore` | Tells git which files/folders to never commit (.env, .venv, cache, parquet outputs) |
+| `.env.example` | Template showing which API keys are needed — users copy this to `.env` and fill in their keys |
+| `LICENSE` | MIT open-source license for the project |
+| `config.yaml` | Single source of truth for the experiment — which models to run, how many examples, concurrency, etc. |
+| `prices.yaml` | Published $/1M token pricing per model — used to compute estimated cost per 1,000 API calls |
+| `Makefile` | Shortcut commands: `make setup`, `make run`, `make test`, `make report`, etc. |
+| `setup.py` | Makes the `src/evalharness` package importable as `python -m evalharness` |
+| `src/evalharness/__init__.py` | Marks the folder as a Python package (required by Python) |
+| `src/evalharness/__main__.py` | Entry point so `python -m evalharness` works — calls `cli.main()` |
+| `src/evalharness/cli.py` | Command-line interface: `run`, `report`, `all` subcommands — **stub, filled in Phase 8** |
+| `src/evalharness/config.py` | Loads and validates `config.yaml` using Pydantic — **stub, filled in Phase 3** |
+| `src/evalharness/schema.py` | Pydantic model defining what a valid ticket extraction looks like — **stub, filled in Phase 3** |
+| `src/evalharness/dataset.py` | Loads `seed_dataset.jsonl` into a list of Example objects — **stub, filled in Phase 3** |
+| `src/evalharness/clients.py` | Wraps litellm to call any LLM with retry/backoff — **stub, filled in Phase 4** |
+| `src/evalharness/cache.py` | Disk-based response cache so re-runs don't cost API calls — **stub, filled in Phase 4** |
+| `src/evalharness/runner.py` | Async engine that runs all model×prompt×example combinations — **stub, filled in Phase 5** |
+| `src/evalharness/aggregate.py` | Joins all scorer outputs into one summary table — **stub, filled in Phase 7** |
+| `src/evalharness/report.py` | Generates 4 charts and writes REPORT.md — **stub, filled in Phase 7** |
+| `src/evalharness/scorers/__init__.py` | Marks scorers as a sub-package |
+| `src/evalharness/scorers/deterministic.py` | Computes field-level F1, exact match, JSON validity — **stub, filled in Phase 6** |
+| `src/evalharness/scorers/judge.py` | LLM-as-judge scorer with rubric + reliability check — **stub, filled in Phase 6** |
+| `src/evalharness/scorers/operational.py` | Computes latency p50/p95 and estimated cost — **stub, filled in Phase 6** |
+| `tests/test_schema.py` | Unit tests for schema parsing and validation — **stub, filled in Phase 3** |
+| `tests/test_deterministic.py` | Unit tests for F1/precision/recall scorer — **stub, filled in Phase 6** |
+| `tests/test_runner_cache.py` | Unit tests verifying cache short-circuits API calls — **stub, filled in Phase 5/6** |
+| `dashboard/app.py` | Optional Streamlit dashboard for exploring results — **stub, filled in Phase 10** |
+| `prompts/extract_v1.txt` | First prompt template for the extraction task — **stub, filled in Phase 2** |
+| `prompts/extract_v2.txt` | Second prompt variant to compare against v1 — **stub, filled in Phase 2** |
+| `results/sample/.gitkeep` | Keeps the `results/sample/` folder tracked by git (empty folders aren't tracked otherwise) |
+
+---
+
+## Phase 2 — Data (`commit: pending`)
+*Goal: Author the curated dataset and prompt templates.*
+
+| File | Purpose |
+|---|---|
+| `data/seed_dataset.jsonl` | 80 hand-curated customer-support ticket examples with gold labels (order_id, issue_type, sentiment, etc.) |
+| `data/human_quality.jsonl` | 10 examples with human 1–5 quality scores — used to verify LLM judge reliability |
+| `prompts/extract_v1.txt` | Prompt v1: direct instruction style for field extraction |
+| `prompts/extract_v2.txt` | Prompt v2: chain-of-thought / few-shot style — compared against v1 |
+
+---
+
+## Phase 3 — Schema + Dataset + Config (`commit: pending`)
+*Goal: Core data models and loaders that all other modules depend on.*
+
+| File | Purpose |
+|---|---|
+| `src/evalharness/schema.py` | Pydantic `TicketExtraction` model with enums for issue_type and sentiment; `parse_model_output()` function |
+| `src/evalharness/dataset.py` | `load_dataset()` reads JSONL and returns typed `Example` objects |
+| `src/evalharness/config.py` | `load_config()` reads `config.yaml`, validates with Pydantic, returns typed `Config` object |
+| `tests/test_schema.py` | Tests: valid JSON parses correctly, fenced JSON strips and parses, garbage returns is_valid=False |
+
+---
+
+## Phase 4 — Clients + Cache (`commit: pending`)
+*Goal: The model gateway and caching layer — all API calls go through here.*
+
+| File | Purpose |
+|---|---|
+| `src/evalharness/clients.py` | `async generate()` wraps litellm, captures latency, tokens, errors; retries on 429s |
+| `src/evalharness/cache.py` | `get_cached()` / `set_cached()` using diskcache keyed by sha256 of model+prompt+input |
+
+---
+
+## Phase 5 — Runner (`commit: pending`)
+*Goal: The async orchestration engine that drives the full benchmark matrix.*
+
+| File | Purpose |
+|---|---|
+| `src/evalharness/runner.py` | Builds model×prompt×example matrix, runs async with Semaphore, writes `results/raw_runs.parquet` |
+| `tests/test_runner_cache.py` | Tests: cache hit skips API call (mocked client) |
+
+---
+
+## Phase 6 — Scorers (`commit: pending`)
+*Goal: All three scoring dimensions.*
+
+| File | Purpose |
+|---|---|
+| `src/evalharness/scorers/deterministic.py` | Per-field precision/recall/F1, full-record exact match, JSON validity rate |
+| `src/evalharness/scorers/operational.py` | Latency p50/p95 per model; estimated cost per 1,000 calls from token counts × prices.yaml |
+| `src/evalharness/scorers/judge.py` | Sends (input, gold, output) to judge model; returns 1–5 score + justification; computes MAE + Spearman vs human scores |
+| `tests/test_deterministic.py` | Tests: known (pred, gold) pairs produce expected P/R/F1 |
+
+---
+
+## Phase 7 — Aggregate + Report (`commit: pending`)
+*Goal: Turn raw results into a summary table, charts, and a written recommendation.*
+
+| File | Purpose |
+|---|---|
+| `src/evalharness/aggregate.py` | Joins deterministic + operational + judge metrics into `results/summary.parquet` |
+| `src/evalharness/report.py` | Generates 4 charts (F1 vs cost, latency, JSON validity, prompt comparison) + writes `REPORT.md` |
+| `REPORT.md` | Auto-generated output: summary table, chart images, judge reliability, recommendation |
+
+---
+
+## Phase 8 — CLI + Makefile (`commit: pending`)
+*Goal: Wire everything together behind a clean command-line interface.*
+
+| File | Purpose |
+|---|---|
+| `src/evalharness/cli.py` | `run` / `report` / `all` subcommands with `--smoke` flag using argparse |
+
+---
+
+## Phase 9 — README (`commit: pending`)
+*Goal: Professional documentation that makes the repo recruiter-ready.*
+
+| File | Purpose |
+|---|---|
+| `README.md` | Full project docs: problem statement, architecture diagram, quickstart, results table, design choices, limitations |
+
+---
+
+## Phase 10 — Optional Extras (`commit: pending`)
+*Goal: Dashboard and CI polish.*
+
+| File | Purpose |
+|---|---|
+| `dashboard/app.py` | Streamlit app: sortable results table, charts, per-example drill-down |

@@ -1,1 +1,22 @@
-# Prompt template variant 2 — filled in Phase 2
+You are an intelligent support ticket analyser. Your job is to read a customer support ticket carefully and extract key structured fields.
+
+Think through the ticket step by step:
+1. Is there an order number? (digits only, strip any # symbol)
+2. What is the main issue? Choose the single best category: delivery_delay, refund, defective, account, or other.
+3. Is a city or location mentioned?
+4. What is the overall customer sentiment: positive, neutral, or negative?
+5. Is an expected delivery date mentioned? Convert it to YYYY-MM-DD format.
+
+After reasoning, output ONLY a valid JSON object with these exact fields:
+{
+  "order_id": "<string or null>",
+  "issue_type": "<delivery_delay | refund | defective | account | other>",
+  "location": "<string or null>",
+  "sentiment": "<positive | neutral | negative>",
+  "due_date": "<YYYY-MM-DD or null>"
+}
+
+Do not include your reasoning in the output. Output only the final JSON object.
+
+Ticket:
+{input}
