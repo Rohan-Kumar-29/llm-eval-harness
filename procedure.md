@@ -26,7 +26,7 @@ Updated after each phase.
 | `src/evalharness/dataset.py` | Loads `seed_dataset.jsonl` into a list of Example objects — ✅ implemented in Phase 3 |
 | `src/evalharness/clients.py` | Wraps litellm to call any LLM with retry/backoff — ✅ implemented in Phase 4 |
 | `src/evalharness/cache.py` | Disk-based response cache so re-runs don't cost API calls — ✅ implemented in Phase 4 |
-| `src/evalharness/runner.py` | Async engine that runs all model×prompt×example combinations — **stub, filled in Phase 5** |
+| `src/evalharness/runner.py` | Async engine that runs all model×prompt×example combinations — ✅ implemented in Phase 5 |
 | `src/evalharness/aggregate.py` | Joins all scorer outputs into one summary table — **stub, filled in Phase 7** |
 | `src/evalharness/report.py` | Generates 4 charts and writes REPORT.md — **stub, filled in Phase 7** |
 | `src/evalharness/scorers/__init__.py` | Marks scorers as a sub-package |
@@ -35,7 +35,7 @@ Updated after each phase.
 | `src/evalharness/scorers/operational.py` | Computes latency p50/p95 and estimated cost — **stub, filled in Phase 6** |
 | `tests/test_schema.py` | Unit tests for schema parsing and validation — ✅ implemented in Phase 3 |
 | `tests/test_deterministic.py` | Unit tests for F1/precision/recall scorer — **stub, filled in Phase 6** |
-| `tests/test_runner_cache.py` | Unit tests verifying cache short-circuits API calls — **stub, filled in Phase 5/6** |
+| `tests/test_runner_cache.py` | Unit tests verifying cache short-circuits API calls — ✅ implemented in Phase 5 |
 | `dashboard/app.py` | Optional Streamlit dashboard for exploring results — **stub, filled in Phase 10** |
 | `prompts/extract_v1.txt` | First prompt template for the extraction task — ✅ implemented in Phase 2 |
 | `prompts/extract_v2.txt` | Second prompt variant to compare against v1 — ✅ implemented in Phase 2 |
@@ -77,13 +77,13 @@ Updated after each phase.
 
 ---
 
-## Phase 5 — Runner (`commit: pending`)
+## Phase 5 — Runner (`commit: 5466c21`)
 *Goal: The async orchestration engine that drives the full benchmark matrix.*
 
-| File | Purpose |
-|---|---|
-| `src/evalharness/runner.py` | Builds model×prompt×example matrix, runs async with Semaphore, writes `results/raw_runs.parquet` |
-| `tests/test_runner_cache.py` | Tests: cache hit skips API call (mocked client) |
+| File | Purpose | Status |
+|---|---|---|
+| `src/evalharness/runner.py` | Builds model×prompt×example×repeat matrix, async with `Semaphore(concurrency)`, tqdm progress bar, rich summary table, saves `results/raw_runs.parquet`. Smoke mode: 5 examples × 1 model × 1 prompt | ✅ Implemented |
+| `tests/test_runner_cache.py` | 5 tests: cache key determinism, key differs by model/temperature, roundtrip set/get, cache miss returns None | ✅ 5/5 passing |
 
 ---
 
