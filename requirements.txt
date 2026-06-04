@@ -11,6 +11,7 @@ python-dotenv
 tqdm
 rich
 scikit-learn
+scipy
 pytest
 ruff
 
