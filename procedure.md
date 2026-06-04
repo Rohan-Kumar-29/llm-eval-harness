@@ -20,7 +20,7 @@ Updated after each phase.
 | `setup.py` | Makes the `src/evalharness` package importable as `python -m evalharness` |
 | `src/evalharness/__init__.py` | Marks the folder as a Python package (required by Python) |
 | `src/evalharness/__main__.py` | Entry point so `python -m evalharness` works — calls `cli.main()` |
-| `src/evalharness/cli.py` | Command-line interface: `run`, `report`, `all` subcommands — **stub, filled in Phase 8** |
+| `src/evalharness/cli.py` | Command-line interface: `run`, `report`, `all` subcommands — ✅ implemented in Phase 8 |
 | `src/evalharness/config.py` | Loads and validates `config.yaml` using Pydantic — ✅ implemented in Phase 3 |
 | `src/evalharness/schema.py` | Pydantic model defining what a valid ticket extraction looks like — ✅ implemented in Phase 3 |
 | `src/evalharness/dataset.py` | Loads `seed_dataset.jsonl` into a list of Example objects — ✅ implemented in Phase 3 |
@@ -110,12 +110,12 @@ Updated after each phase.
 
 ---
 
-## Phase 8 — CLI + Makefile (`commit: pending`)
+## Phase 8 — CLI + Makefile (`commit: bf1438c`)
 *Goal: Wire everything together behind a clean command-line interface.*
 
-| File | Purpose |
-|---|---|
-| `src/evalharness/cli.py` | `run` / `report` / `all` subcommands with `--smoke` flag using argparse |
+| File | Purpose | Status |
+|---|---|---|
+| `src/evalharness/cli.py` | `run` / `report` / `all` subcommands with `--smoke` and `--config` flags. `report` runs judge, computes reliability, generates charts + REPORT.md. All wired to `python -m evalharness` | ✅ Implemented |
 
 ---
 
