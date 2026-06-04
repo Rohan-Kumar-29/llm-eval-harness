@@ -88,13 +88,12 @@ def chart_f1_by_prompt(df: pd.DataFrame) -> Path:
 # ── Auto-generated recommendation ────────────────────────────────────────────
 
 def _recommend(df: pd.DataFrame) -> str:
-    """Pick best macro_f1 within cost ≤ median cost band."""
-    median_cost = df["cost_per_1k_usd"].median()
-    affordable = df[df["cost_per_1k_usd"] <= max(median_cost * 1.5, 0.001)]
-    if affordable.empty:
-        affordable = df
+    """Pick best macro_f1 among models with json_validity >= 0.5 (reliable output)."""
+    reliable = df[df["json_validity"] >= 0.5]
+    if reliable.empty:
+        reliable = df  # fall back to all if none are reliable
 
-    best = affordable.loc[affordable["macro_f1"].idxmax()]
+    best = reliable.loc[reliable["macro_f1"].idxmax()]
     worst_cost = df.loc[df["cost_per_1k_usd"].idxmax()]
 
     lines = [
@@ -105,8 +104,8 @@ def _recommend(df: pd.DataFrame) -> str:
         f"- Latency p50 / p95: **{best['latency_p50_ms']:.0f} ms / {best['latency_p95_ms']:.0f} ms**",
         f"- JSON validity: **{best['json_validity'] * 100:.1f}%**",
         "",
-        f"This model achieves the highest extraction accuracy within an affordable cost band "
-        f"(≤ ${max(median_cost * 1.5, 0.001):.4f}/1k calls). "
+        f"This model achieves the highest extraction accuracy among models with reliable JSON output "
+        f"(json_validity >= 50%). "
         f"The most expensive option (`{worst_cost['model_label']}`) costs "
         f"${worst_cost['cost_per_1k_usd']:.4f}/1k calls "
         f"{'with similar accuracy' if abs(worst_cost['macro_f1'] - best['macro_f1']) < 0.05 else 'without a proportional accuracy gain'}.",
