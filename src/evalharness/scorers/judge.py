@@ -25,10 +25,10 @@ Score the PREDICTION on a scale of 1 to 5:
 1 - Fail: completely wrong or unparseable output
 
 Return ONLY a JSON object with exactly these keys:
-{
+{{
   "score": <integer 1-5>,
   "justification": "<one sentence explaining the score>"
-}
+}}
 
 INPUT: {input}
 GOLD: {gold}
@@ -38,18 +38,40 @@ PREDICTION: {prediction}
 _FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
 
 
+_JSON_OBJ_RE = re.compile(r"\{.*?\}", re.DOTALL)
+_SCORE_RE = re.compile(r'"score"\s*:\s*([1-5])')
+
+
 def _parse_judge_response(text: str) -> Optional[dict]:
     if not text:
         return None
+
+    # Try fenced block first
     match = _FENCE_RE.search(text)
-    if match:
-        text = match.group(1).strip()
+    candidate = match.group(1).strip() if match else text.strip()
+
+    # Try direct parse of candidate
     try:
-        data = json.loads(text)
-        if "score" in data and isinstance(data["score"], int):
-            return data
+        data = json.loads(candidate)
+        if "score" in data:
+            return {"score": int(data["score"]), "justification": data.get("justification", "")}
     except Exception:
         pass
+
+    # Find first {...} object anywhere in the text
+    for m in _JSON_OBJ_RE.finditer(text):
+        try:
+            data = json.loads(m.group())
+            if "score" in data:
+                return {"score": int(data["score"]), "justification": data.get("justification", "")}
+        except Exception:
+            continue
+
+    # Last resort: extract score integer with regex
+    score_match = _SCORE_RE.search(text)
+    if score_match:
+        return {"score": int(score_match.group(1)), "justification": ""}
+
     return None
 
 

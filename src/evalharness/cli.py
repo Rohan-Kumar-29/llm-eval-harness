@@ -49,9 +49,15 @@ def _report(args: argparse.Namespace) -> None:
         rows = raw_df.to_dict("records")
         for r in rows:
             if isinstance(r.get("gold"), str):
-                r["gold"] = json.loads(r["gold"])
+                try:
+                    r["gold"] = json.loads(r["gold"])
+                except Exception:
+                    pass
             if isinstance(r.get("parsed_json"), str):
-                r["parsed_json"] = json.loads(r["parsed_json"])
+                try:
+                    r["parsed_json"] = json.loads(r["parsed_json"])
+                except Exception:
+                    r["parsed_json"] = None
 
         judge_scores = asyncio.run(run_judge(
             judge_model_id=config.judge_model.id,
@@ -77,7 +83,7 @@ def _report(args: argparse.Namespace) -> None:
 
     console.print("[bold]Generating charts and REPORT.md...[/bold]")
     report_path = write_report(summary_df, judge_reliability=judge_reliability)
-    console.print(f"[green]Report written → {report_path}[/green]")
+    console.print(f"[green]Report written -> {report_path}[/green]")
 
 
 def _all(args: argparse.Namespace) -> None:

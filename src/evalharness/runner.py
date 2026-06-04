@@ -136,7 +136,7 @@ async def run_benchmark(config: Config, smoke: bool = False) -> pd.DataFrame:
     # Save raw results
     out_path = RESULTS_DIR / "raw_runs.parquet"
     df.to_parquet(out_path, index=False)
-    console.print(f"[green]Saved {len(df)} rows → {out_path}[/green]")
+    console.print(f"[green]Saved {len(df)} rows -> {out_path}[/green]")
 
     _print_summary(df)
     return df

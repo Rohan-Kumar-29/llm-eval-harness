@@ -12,6 +12,7 @@ tqdm
 rich
 scikit-learn
 scipy
+tabulate
 pytest
 ruff
 
