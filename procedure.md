@@ -21,11 +21,11 @@ Updated after each phase.
 | `src/evalharness/__init__.py` | Marks the folder as a Python package (required by Python) |
 | `src/evalharness/__main__.py` | Entry point so `python -m evalharness` works — calls `cli.main()` |
 | `src/evalharness/cli.py` | Command-line interface: `run`, `report`, `all` subcommands — **stub, filled in Phase 8** |
-| `src/evalharness/config.py` | Loads and validates `config.yaml` using Pydantic — **stub, filled in Phase 3** |
-| `src/evalharness/schema.py` | Pydantic model defining what a valid ticket extraction looks like — **stub, filled in Phase 3** |
-| `src/evalharness/dataset.py` | Loads `seed_dataset.jsonl` into a list of Example objects — **stub, filled in Phase 3** |
-| `src/evalharness/clients.py` | Wraps litellm to call any LLM with retry/backoff — **stub, filled in Phase 4** |
-| `src/evalharness/cache.py` | Disk-based response cache so re-runs don't cost API calls — **stub, filled in Phase 4** |
+| `src/evalharness/config.py` | Loads and validates `config.yaml` using Pydantic — ✅ implemented in Phase 3 |
+| `src/evalharness/schema.py` | Pydantic model defining what a valid ticket extraction looks like — ✅ implemented in Phase 3 |
+| `src/evalharness/dataset.py` | Loads `seed_dataset.jsonl` into a list of Example objects — ✅ implemented in Phase 3 |
+| `src/evalharness/clients.py` | Wraps litellm to call any LLM with retry/backoff — ✅ implemented in Phase 4 |
+| `src/evalharness/cache.py` | Disk-based response cache so re-runs don't cost API calls — ✅ implemented in Phase 4 |
 | `src/evalharness/runner.py` | Async engine that runs all model×prompt×example combinations — **stub, filled in Phase 5** |
 | `src/evalharness/aggregate.py` | Joins all scorer outputs into one summary table — **stub, filled in Phase 7** |
 | `src/evalharness/report.py` | Generates 4 charts and writes REPORT.md — **stub, filled in Phase 7** |
@@ -33,17 +33,17 @@ Updated after each phase.
 | `src/evalharness/scorers/deterministic.py` | Computes field-level F1, exact match, JSON validity — **stub, filled in Phase 6** |
 | `src/evalharness/scorers/judge.py` | LLM-as-judge scorer with rubric + reliability check — **stub, filled in Phase 6** |
 | `src/evalharness/scorers/operational.py` | Computes latency p50/p95 and estimated cost — **stub, filled in Phase 6** |
-| `tests/test_schema.py` | Unit tests for schema parsing and validation — **stub, filled in Phase 3** |
+| `tests/test_schema.py` | Unit tests for schema parsing and validation — ✅ implemented in Phase 3 |
 | `tests/test_deterministic.py` | Unit tests for F1/precision/recall scorer — **stub, filled in Phase 6** |
 | `tests/test_runner_cache.py` | Unit tests verifying cache short-circuits API calls — **stub, filled in Phase 5/6** |
 | `dashboard/app.py` | Optional Streamlit dashboard for exploring results — **stub, filled in Phase 10** |
-| `prompts/extract_v1.txt` | First prompt template for the extraction task — **stub, filled in Phase 2** |
-| `prompts/extract_v2.txt` | Second prompt variant to compare against v1 — **stub, filled in Phase 2** |
+| `prompts/extract_v1.txt` | First prompt template for the extraction task — ✅ implemented in Phase 2 |
+| `prompts/extract_v2.txt` | Second prompt variant to compare against v1 — ✅ implemented in Phase 2 |
 | `results/sample/.gitkeep` | Keeps the `results/sample/` folder tracked by git (empty folders aren't tracked otherwise) |
 
 ---
 
-## Phase 2 — Data (`commit: pending`)
+## Phase 2 — Data (`commit: 31a518f`)
 *Goal: Author the curated dataset and prompt templates.*
 
 | File | Purpose |
@@ -55,25 +55,25 @@ Updated after each phase.
 
 ---
 
-## Phase 3 — Schema + Dataset + Config (`commit: pending`)
+## Phase 3 — Schema + Dataset + Config (`commit: 6b87f46`)
 *Goal: Core data models and loaders that all other modules depend on.*
 
-| File | Purpose |
-|---|---|
-| `src/evalharness/schema.py` | Pydantic `TicketExtraction` model with enums for issue_type and sentiment; `parse_model_output()` function |
-| `src/evalharness/dataset.py` | `load_dataset()` reads JSONL and returns typed `Example` objects |
-| `src/evalharness/config.py` | `load_config()` reads `config.yaml`, validates with Pydantic, returns typed `Config` object |
-| `tests/test_schema.py` | Tests: valid JSON parses correctly, fenced JSON strips and parses, garbage returns is_valid=False |
+| File | Purpose | Status |
+|---|---|---|
+| `src/evalharness/schema.py` | Pydantic `TicketExtraction` model with `IssueType` and `Sentiment` enums; `parse_model_output()` strips fences and validates | ✅ Implemented |
+| `src/evalharness/dataset.py` | `load_dataset()` reads JSONL line-by-line and returns typed `Example` dataclass objects | ✅ Implemented |
+| `src/evalharness/config.py` | `load_config()` reads `config.yaml`, validates all fields with Pydantic, returns typed `Config` object | ✅ Implemented |
+| `tests/test_schema.py` | 9 tests: valid JSON, fenced JSON, fence without tag, garbage input, empty string, invalid enum, missing required field, all-nulls, direct model | ✅ 9/9 passing |
 
 ---
 
-## Phase 4 — Clients + Cache (`commit: pending`)
+## Phase 4 — Clients + Cache (`commit: cb146e3`)
 *Goal: The model gateway and caching layer — all API calls go through here.*
 
-| File | Purpose |
-|---|---|
-| `src/evalharness/clients.py` | `async generate()` wraps litellm, captures latency, tokens, errors; retries on 429s |
-| `src/evalharness/cache.py` | `get_cached()` / `set_cached()` using diskcache keyed by sha256 of model+prompt+input |
+| File | Purpose | Status |
+|---|---|---|
+| `src/evalharness/clients.py` | `async generate()` wraps litellm.acompletion(), captures wall-clock latency and token usage, tenacity retry with exponential backoff (max 4 attempts), clear error on missing API key | ✅ Implemented |
+| `src/evalharness/cache.py` | `get_cached()` / `set_cached()` using diskcache under `.cache/`, keyed by sha256(model+prompt+input+temperature) | ✅ Implemented |
 
 ---
 
