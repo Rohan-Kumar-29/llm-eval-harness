@@ -119,12 +119,13 @@ Updated after each phase.
 
 ---
 
-## Phase 9 — README (`commit: pending`)
+## Phase 9 — README (`commit: f77be32`)
 *Goal: Professional documentation that makes the repo recruiter-ready.*
 
-| File | Purpose |
-|---|---|
-| `README.md` | Full project docs: problem statement, architecture diagram, quickstart, results table, design choices, limitations |
+| File | Purpose | Status |
+|---|---|---|
+| `README.md` | Problem statement, ASCII architecture diagram, key features, quickstart, real results table (80 examples × 3 models × 2 prompts), recommendation with honest notes on rate-limits, evaluation methodology, design choices, known limitations, roadmap, cost note | ✅ Implemented |
+| `REPORT.md` | Auto-generated report from real full run — summary table, 4 charts, recommendation (llama-70b), judge reliability section | ✅ Committed sample |
 
 ---
 
