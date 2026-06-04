@@ -1,0 +1,19 @@
+# Published pay-as-you-go pricing ($/1M tokens) for cost comparison.
+# Cost computed from published pricing for comparison only;
+# development used free tiers (Gemini AI Studio, Groq, OpenRouter free models).
+models:
+  gemini-flash:
+    input_per_1m: 0.075
+    output_per_1m: 0.30
+
+  llama-70b:
+    input_per_1m: 0.59
+    output_per_1m: 0.79
+
+  llama-8b-free:
+    input_per_1m: 0.0
+    output_per_1m: 0.0
+
+  llama-8b-local:
+    input_per_1m: 0.0
+    output_per_1m: 0.0

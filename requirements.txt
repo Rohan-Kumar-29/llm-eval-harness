@@ -1,0 +1,20 @@
+# Core dependencies
+litellm
+pydantic>=2
+pyyaml
+pandas
+pyarrow
+matplotlib
+tenacity
+diskcache
+python-dotenv
+tqdm
+rich
+scikit-learn
+pytest
+ruff
+
+# Optional — lazy-imported; core runs without these
+# streamlit
+# ragas
+# datasets
