@@ -27,8 +27,8 @@ Updated after each phase.
 | `src/evalharness/clients.py` | Wraps litellm to call any LLM with retry/backoff — ✅ implemented in Phase 4 |
 | `src/evalharness/cache.py` | Disk-based response cache so re-runs don't cost API calls — ✅ implemented in Phase 4 |
 | `src/evalharness/runner.py` | Async engine that runs all model×prompt×example combinations — ✅ implemented in Phase 5 |
-| `src/evalharness/aggregate.py` | Joins all scorer outputs into one summary table — **stub, filled in Phase 7** |
-| `src/evalharness/report.py` | Generates 4 charts and writes REPORT.md — **stub, filled in Phase 7** |
+| `src/evalharness/aggregate.py` | Joins all scorer outputs into one summary table — ✅ implemented in Phase 7 |
+| `src/evalharness/report.py` | Generates 4 charts and writes REPORT.md — ✅ implemented in Phase 7 |
 | `src/evalharness/scorers/__init__.py` | Marks scorers as a sub-package |
 | `src/evalharness/scorers/deterministic.py` | Computes field-level F1, exact match, JSON validity — ✅ implemented in Phase 6 |
 | `src/evalharness/scorers/judge.py` | LLM-as-judge scorer with rubric + reliability check — ✅ implemented in Phase 6 |
@@ -99,14 +99,14 @@ Updated after each phase.
 
 ---
 
-## Phase 7 — Aggregate + Report (`commit: pending`)
+## Phase 7 — Aggregate + Report (`commit: 8a21ed7`)
 *Goal: Turn raw results into a summary table, charts, and a written recommendation.*
 
-| File | Purpose |
-|---|---|
-| `src/evalharness/aggregate.py` | Joins deterministic + operational + judge metrics into `results/summary.parquet` |
-| `src/evalharness/report.py` | Generates 4 charts (F1 vs cost, latency, JSON validity, prompt comparison) + writes `REPORT.md` |
-| `REPORT.md` | Auto-generated output: summary table, chart images, judge reliability, recommendation |
+| File | Purpose | Status |
+|---|---|---|
+| `src/evalharness/aggregate.py` | `build_summary()` joins deterministic + operational metrics into one row per (model_label, prompt_file), writes `results/summary.parquet` | ✅ Implemented |
+| `src/evalharness/report.py` | Generates 4 charts: F1 vs cost scatter, latency p50/p95 bar, JSON validity bar, F1 by prompt grouped bar. `write_report()` writes `REPORT.md` with table, charts, auto recommendation, judge reliability section | ✅ Implemented |
+| `REPORT.md` | Auto-generated output — created at runtime by `make report` | ✅ Template ready |
 
 ---
 
