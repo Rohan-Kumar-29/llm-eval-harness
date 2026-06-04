@@ -99,27 +99,36 @@ async def judge_single(
     return {"judge_score": None, "judge_justification": None, "judge_error": result.error or "unparseable judge response"}
 
 
-async def run_judge(
+async def run_judge_reliability(
     judge_model_id: str,
-    rows: list[dict],
-    sample_size: int,
-    concurrency: int = 4,
+    human_quality: list[dict],
+    gold_by_id: dict[str, dict],
+    input_by_id: dict[str, str],
+    concurrency: int = 2,
 ) -> list[dict]:
-    """Run judge on a sample of rows. Returns list of {example_id, judge_score, ...}."""
-    sample = rows[:sample_size]
+    """Judge the exact outputs a human scored, so scores are directly comparable.
+
+    Reliability is only meaningful when the judge grades the SAME output the human
+    graded. Each `human_quality` record carries its own `model_output` and a
+    `human_score`; we ask the judge to score that output against the gold for the
+    same example id. Correlating these paired scores is a valid calibration —
+    unlike scoring arbitrary live predictions against a human score tied to a
+    different output.
+    """
     semaphore = asyncio.Semaphore(concurrency)
 
-    async def _bounded(row: dict) -> dict:
+    async def _bounded(h: dict) -> dict:
+        gold = gold_by_id.get(h["id"], {})
         async with semaphore:
             result = await judge_single(
                 judge_model_id=judge_model_id,
-                input_text=row["input"],
-                gold=row["gold"],
-                prediction=row.get("parsed_json"),
+                input_text=input_by_id.get(h["id"], ""),
+                gold=gold,
+                prediction=h.get("model_output"),
             )
-        return {"example_id": row["example_id"], "model_label": row["model_label"], **result}
+        return {"example_id": h["id"], **result}
 
-    tasks = [_bounded(row) for row in sample]
+    tasks = [_bounded(h) for h in human_quality]
     return await asyncio.gather(*tasks)
 
 

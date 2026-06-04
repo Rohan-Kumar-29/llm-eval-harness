@@ -62,9 +62,13 @@ def compute_metrics(rows: list[dict]) -> dict[str, float]:
         pred_present = [r.get("parsed_json") is not None and r["parsed_json"].get(field) is not None for r in rows]
         matches = [s[key] for s in record_scores]
 
-        tp = sum(1 for m, gp in zip(matches, gold_present) if m and gp)
-        fp = sum(1 for m, pp, gp in zip(matches, pred_present, gold_present) if pp and not gp)
-        fn = sum(1 for m, gp in zip(matches, gold_present) if not m and gp)
+        # A prediction is a true positive only when it is present and matches gold.
+        # A present-but-wrong prediction is BOTH a false positive (wrong value emitted)
+        # and a false negative (correct gold value missed) — this is the standard
+        # treatment and avoids inflating precision on confidently-wrong guesses.
+        tp = sum(1 for m, pp, gp in zip(matches, pred_present, gold_present) if m and pp and gp)
+        fp = sum(1 for m, pp in zip(matches, pred_present) if pp and not m)
+        fn = sum(1 for m, gp in zip(matches, gold_present) if gp and not m)
 
         precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
         recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0

@@ -6,14 +6,16 @@
 
 ## Summary Table
 
-| model_label   | prompt_file    |   n |   macro_f1 |   json_validity |   exact_match_rate |   latency_p50_ms |   latency_p95_ms |   cost_per_1k_usd |
-|:--------------|:---------------|----:|-----------:|----------------:|-------------------:|-----------------:|-----------------:|------------------:|
-| gemini-flash  | extract_v1.txt |  80 |      0.205 |           0.125 |              0.075 |          10562   |          10984.6 |           0.01219 |
-| gemini-flash  | extract_v2.txt |  80 |      0.085 |           0.062 |              0.038 |          10454.5 |          11051.1 |           0.00742 |
-| llama-70b     | extract_v1.txt |  80 |      0.78  |           1     |              0.65  |            532.6 |            815.3 |           0.15881 |
-| llama-70b     | extract_v2.txt |  80 |      0.778 |           1     |              0.638 |            598.6 |           1029.3 |           0.20269 |
-| llama-8b-free | extract_v1.txt |  80 |      0     |           0     |              0     |           9134.2 |          10177.9 |           0       |
-| llama-8b-free | extract_v2.txt |  80 |      0     |           0     |              0     |           9106.4 |           9505.5 |           0       |
+| model_label      | prompt_file    |   n |   macro_f1 |   json_validity |   exact_match_rate |   latency_p50_ms |   latency_p95_ms |   cost_per_1k_usd |
+|:-----------------|:---------------|----:|-----------:|----------------:|-------------------:|-----------------:|-----------------:|------------------:|
+| gemini-flash     | extract_v1.txt |  80 |      0.204 |           0.125 |              0.075 |          10502.8 |          11096.8 |           0.01219 |
+| gemini-flash     | extract_v2.txt |  80 |      0.099 |           0.075 |              0.05  |          10448   |          10935.2 |           0.00879 |
+| llama-70b        | extract_v1.txt |  80 |      0.762 |           1     |              0.65  |            532.6 |            815.3 |           0.15881 |
+| llama-70b        | extract_v2.txt |  80 |      0.76  |           1     |              0.638 |            598.6 |           1029.3 |           0.20269 |
+| llama-8b-free    | extract_v1.txt |  80 |      0     |           0     |              0     |            399.7 |            557.2 |           0       |
+| llama-8b-free    | extract_v2.txt |  80 |      0     |           0     |              0     |            359.4 |            518.2 |           0       |
+| llama-8b-instant | extract_v1.txt |  80 |      0.745 |           1     |              0.575 |            420.4 |            716.7 |           0.01445 |
+| llama-8b-instant | extract_v2.txt |  80 |      0.753 |           1     |              0.612 |            428.1 |            722.8 |           0.01773 |
 
 ---
 
@@ -21,7 +23,7 @@
 
 **Recommended model: `llama-70b` with prompt `extract_v1.txt`**
 
-- Macro F1: **0.780**
+- Macro F1: **0.762**
 - Estimated cost per 1,000 calls: **$0.1588**
 - Latency p50 / p95: **533 ms / 815 ms**
 - JSON validity: **100.0%**
@@ -33,27 +35,27 @@ This model achieves the highest extraction accuracy among models with reliable J
 ## Charts
 
 ### Accuracy (Macro F1) vs Estimated Cost
-![F1 vs Cost](results/f1_vs_cost.png)
+![F1 vs Cost](results/sample/f1_vs_cost.png)
 
 ### Latency p50 / p95 per Model
-![Latency](results/latency.png)
+![Latency](results/sample/latency.png)
 
 ### JSON Validity Rate
-![JSON Validity](results/json_validity.png)
+![JSON Validity](results/sample/json_validity.png)
 
 ### Macro F1 by Prompt Variant
-![F1 by Prompt](results/f1_by_prompt.png)
+![F1 by Prompt](results/sample/f1_by_prompt.png)
 
 ---
 
 ## Judge Reliability
 
-The LLM judge was calibrated against 0 human-scored examples.
+The LLM judge was calibrated against 10 human-scored examples.
 
 | Metric | Value |
 |---|---|
-| Mean Absolute Error (vs human) | N/A |
-| Spearman Correlation (vs human) | N/A |
+| Mean Absolute Error (vs human) | 0.7 |
+| Spearman Correlation (vs human) | 0.843 |
 
 > A Spearman correlation > 0.7 indicates strong judge–human agreement.
 

@@ -16,7 +16,9 @@ tabulate
 pytest
 ruff
 
+# Dashboard (only needed for `streamlit run dashboard/app.py`)
+streamlit
+
 # Optional — lazy-imported; core runs without these
-# streamlit
 # ragas
 # datasets

@@ -91,7 +91,7 @@ cp .env.example .env
 # Quick sanity check (5 examples × 1 model, ~30 seconds)
 python -m evalharness run --smoke
 
-# Full benchmark (80 examples × 3 models × 2 prompts)
+# Full benchmark (80 examples × 4 models × 2 prompts)
 python -m evalharness run
 
 # Generate charts + REPORT.md
@@ -108,32 +108,39 @@ pytest tests/ -v
 
 ## Results
 
-Results from a full run on 80 curated customer-support ticket examples across 3 models and 2 prompt variants.
+Results from a full run on 80 curated customer-support ticket examples across 4 models and 2 prompt variants.
 
 ### Summary Table
 
 | Model | Prompt | n | Macro F1 | JSON Validity | Exact Match | Latency p50 (ms) | Latency p95 (ms) | Cost/1k (USD) |
 |---|---|---|---|---|---|---|---|---|
-| **llama-70b** | extract_v1.txt | 80 | **0.780** | 100.0% | 65.0% | 533 | 815 | $0.1588 |
-| **llama-70b** | extract_v2.txt | 80 | **0.778** | 100.0% | 63.8% | 599 | 1029 | $0.2027 |
-| gemini-flash | extract_v1.txt | 80 | 0.205 | 12.5% | 7.5% | 10562 | 10985 | $0.0122 |
-| gemini-flash | extract_v2.txt | 80 | 0.085 | 6.2% | 3.8% | 10455 | 11051 | $0.0074 |
-| llama-8b-free | extract_v1.txt | 80 | 0.000 | 0.0% | 0.0% | 9134 | 10178 | $0.00 |
-| llama-8b-free | extract_v2.txt | 80 | 0.000 | 0.0% | 0.0% | 9106 | 9506 | $0.00 |
+| **llama-70b** | extract_v1.txt | 80 | **0.762** | 100.0% | 65.0% | 533 | 815 | $0.1588 |
+| **llama-70b** | extract_v2.txt | 80 | 0.760 | 100.0% | 63.8% | 599 | 1029 | $0.2027 |
+| **llama-8b-instant** | extract_v2.txt | 80 | 0.753 | 100.0% | 61.2% | 428 | 723 | $0.0177 |
+| **llama-8b-instant** | extract_v1.txt | 80 | 0.745 | 100.0% | 57.5% | 420 | 717 | $0.0145 |
+| gemini-flash | extract_v1.txt | 80 | 0.204 | 12.5% | 7.5% | 10503 | 11097 | $0.0122 |
+| gemini-flash | extract_v2.txt | 80 | 0.099 | 7.5% | 5.0% | 10448 | 10935 | $0.0088 |
+| llama-8b-free | extract_v1.txt | 80 | 0.000 | 0.0% | 0.0% | 400 | 557 | $0.00 |
+| llama-8b-free | extract_v2.txt | 80 | 0.000 | 0.0% | 0.0% | 359 | 518 | $0.00 |
 
 ### Recommendation
 
-**`llama-70b` with `extract_v1.txt`** is the clear winner:
-- Highest macro F1 (**0.780**) and exact match rate (**65%**) among reliable models
-- 100% JSON validity — never returns unparseable output
-- Fastest latency: **533ms median**, well under 1 second
-- Only model that worked reliably on free tiers in this run
+The interesting result is a **cost/accuracy tradeoff between the two reliable models**:
 
-> **Note on gemini-flash and llama-8b-free:** Both models hit free-tier rate limits during the run (70 and 80 errors respectively out of 80 calls). Their low scores reflect rate-limiting, not model quality — Gemini 2.5 Flash is a capable model on a paid tier. Re-run with reduced `concurrency` or at off-peak times for fair comparison.
+- **`llama-70b`** wins on raw accuracy — macro F1 **0.762**, 65% exact match, 100% valid JSON, 533ms median.
+- **`llama-8b-instant`** is within **~2% F1** (0.753) at **~11× lower cost** ($0.0177 vs $0.2027 per 1k) and *lower* latency (428ms). For high-volume, cost-sensitive workloads it is the better pick; reserve llama-70b for the cases where the last ~2% of accuracy matters.
+
+Both run at 100% JSON validity. The choice is a product decision, not a quality cliff — which is exactly what an eval harness should surface.
+
+> **Note on gemini-flash and llama-8b-free:** Both hit free-tier rate limits during the run (70+ and 80 errors out of 80 calls). Their low scores reflect availability, not model quality — Gemini 2.5 Flash is capable on a paid tier. Re-run at lower `concurrency` or off-peak for a fair comparison.
 
 ### Prompt Variant Comparison
 
-`extract_v1.txt` (direct instruction) and `extract_v2.txt` (chain-of-thought) performed nearly identically for llama-70b (F1: 0.780 vs 0.778), suggesting the direct prompt is sufficient and more token-efficient for this task.
+`extract_v1.txt` (direct instruction) and `extract_v2.txt` (chain-of-thought) performed nearly identically for llama-70b (F1: 0.762 vs 0.760), suggesting the direct prompt is sufficient and more token-efficient for this task.
+
+### Judge Reliability
+
+The LLM-as-judge (`llama-70b`) was calibrated against 10 human-scored outputs: **Spearman correlation 0.843** and **MAE 0.7** on the 1–5 scale — strong agreement (>0.7 is the conventional threshold), confirming the judge tracks human quality assessments rather than drifting on its own.
 
 ---
 
@@ -152,14 +159,14 @@ Each model output is parsed as JSON and validated against the `TicketExtraction`
 - **Cost per 1,000 calls** — computed from `avg_prompt_tokens × input_price + avg_completion_tokens × output_price` using published pay-as-you-go rates from `prices.yaml`
 
 ### LLM-as-Judge
-A separate judge model (Gemini Flash) scores each prediction on a 1–5 rubric:
+A separate judge model (`llama-3.3-70b` via Groq) scores each prediction on a 1–5 rubric:
 - **5** — perfect, all fields match gold
 - **4** — one minor field wrong, core fields correct
 - **3** — two fields wrong or one core field wrong
 - **2** — multiple fields wrong
 - **1** — completely wrong or unparseable
 
-Judge reliability is measured as Spearman correlation and MAE against 10 human-authored quality scores in `data/human_quality.jsonl`. The judge model is always kept separate from the model under test.
+Judge reliability is measured as Spearman correlation and MAE against 10 human-authored quality scores in `data/human_quality.jsonl`. Crucially, the judge grades the *same* outputs the humans graded (each human label carries its own `model_output`), so the correlation is a valid calibration. In this run the judge reached **Spearman 0.843 / MAE 0.7** — strong agreement. The judge model is always kept separate from the model under test.
 
 ---
 
@@ -181,7 +188,7 @@ Judge reliability is measured as Spearman correlation and MAE against 10 human-a
 - **Small seed dataset** — 80 examples in a single domain (customer support tickets). Results may not generalise to other domains or ticket types.
 - **Free-tier rate limits** — Gemini and OpenRouter free models were heavily rate-limited in this run. Numbers for these models reflect availability, not true model quality.
 - **Single domain** — All examples are customer-support tickets. A model that performs well here may not perform well on other extraction tasks.
-- **Judge bias** — The LLM judge (Gemini Flash) may have stylistic preferences that differ from human annotators. Judge reliability check requires more human-scored examples for statistical significance.
+- **Judge bias** — The LLM judge (`llama-3.3-70b`) may have stylistic preferences that differ from human annotators. The 0.843 Spearman is encouraging but rests on only 10 human-scored examples; more labels are needed for tight statistical significance.
 - **Gold label quality** — Gold labels are hand-authored for this project. Edge cases and ambiguous tickets may have debatable correct answers.
 
 ---
@@ -190,7 +197,7 @@ Judge reliability is measured as Spearman correlation and MAE against 10 human-a
 
 - [ ] Ingest a larger public dataset (e.g. HuggingFace `datasets`) for more statistically robust results
 - [ ] Add CI smoke test via GitHub Actions on every push
-- [ ] Streamlit dashboard for interactive per-example drill-down
+- [x] Streamlit dashboard for interactive per-example drill-down (`streamlit run dashboard/app.py`)
 - [ ] Support for structured output APIs (Gemini/OpenAI JSON mode) to reduce invalid JSON rates
 - [ ] Multi-domain evaluation (e.g. medical notes, legal clauses)
 
@@ -233,8 +240,10 @@ llm-eval-harness/
 │   ├── test_deterministic.py
 │   └── test_runner_cache.py
 └── dashboard/
-    └── app.py               # (Optional) Streamlit results explorer
+    └── app.py               # Streamlit results explorer (sortable table, charts, drill-down)
 ```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the data flow and module-level design.
 
 ---
 

@@ -13,3 +13,6 @@ results/*.png
 *.egg-info/
 dist/
 build/
+procedure.local.md
+project_notes.md
+ClaudeCode_Build_Brief_Project2_LLM_Eval_Harness.md

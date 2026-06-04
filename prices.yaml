@@ -10,6 +10,10 @@ models:
     input_per_1m: 0.59
     output_per_1m: 0.79
 
+  llama-8b-instant:
+    input_per_1m: 0.05
+    output_per_1m: 0.08
+
   llama-8b-free:
     input_per_1m: 0.0
     output_per_1m: 0.0

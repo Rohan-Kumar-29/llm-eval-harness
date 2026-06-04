@@ -29,7 +29,7 @@ def _report(args: argparse.Namespace) -> None:
     from evalharness.config import load_config
     from evalharness.dataset import load_dataset
     from evalharness.report import write_report
-    from evalharness.scorers.judge import compute_judge_reliability, run_judge
+    from evalharness.scorers.judge import compute_judge_reliability, run_judge_reliability
 
     config = load_config("config.yaml")
 
@@ -42,38 +42,33 @@ def _report(args: argparse.Namespace) -> None:
     raw_df = load_raw()
     summary_df = build_summary(config, raw_df)
 
-    # Run LLM judge on a sample
+    # Calibrate the LLM judge against the human-scored outputs.
     judge_reliability = None
     try:
-        console.print(f"[bold]Running LLM judge (sample_size={config.run.judge_sample_size})...[/bold]")
-        rows = raw_df.to_dict("records")
-        for r in rows:
-            if isinstance(r.get("gold"), str):
-                try:
-                    r["gold"] = json.loads(r["gold"])
-                except Exception:
-                    pass
-            if isinstance(r.get("parsed_json"), str):
-                try:
-                    r["parsed_json"] = json.loads(r["parsed_json"])
-                except Exception:
-                    r["parsed_json"] = None
-
-        judge_scores = asyncio.run(run_judge(
-            judge_model_id=config.judge_model.id,
-            rows=rows,
-            sample_size=config.run.judge_sample_size,
-            concurrency=config.run.concurrency,
-        ))
-
         human_quality_path = Path(config.human_quality_path)
+        human_quality = []
         if human_quality_path.exists():
-            import json as _json
             human_quality = [
-                _json.loads(line)
+                json.loads(line)
                 for line in human_quality_path.read_text(encoding="utf-8").splitlines()
                 if line.strip()
             ]
+
+        if human_quality:
+            console.print(f"[bold]Calibrating judge against {len(human_quality)} human-scored outputs...[/bold]")
+            # Source input + gold per example id from the dataset so the judge
+            # grades the exact output the human graded, against the right gold.
+            examples = load_dataset(config.dataset_path, max_examples=config.run.max_examples)
+            gold_by_id = {e.id: e.gold for e in examples}
+            input_by_id = {e.id: e.input for e in examples}
+
+            judge_scores = asyncio.run(run_judge_reliability(
+                judge_model_id=config.judge_model.id,
+                human_quality=human_quality,
+                gold_by_id=gold_by_id,
+                input_by_id=input_by_id,
+                concurrency=2,  # free-tier-safe
+            ))
             judge_reliability = compute_judge_reliability(judge_scores, human_quality)
             console.print(f"[green]Judge reliability: MAE={judge_reliability.get('judge_mae')}, "
                           f"Spearman={judge_reliability.get('judge_spearman')} "

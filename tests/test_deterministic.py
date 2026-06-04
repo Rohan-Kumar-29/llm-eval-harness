@@ -64,6 +64,29 @@ def test_compute_metrics_all_invalid():
     assert metrics["exact_match_rate"] == 0.0
 
 
+def test_wrong_but_present_counts_as_fp_and_fn():
+    """A present-but-wrong value must hurt BOTH precision and recall.
+
+    issue_type is wrong on every row (predicted 'account', gold 'refund'):
+    each row is a false positive (wrong value emitted) and a false negative
+    (correct value missed), so precision = recall = f1 = 0 for that field.
+    """
+    rows = [
+        {"parsed_json": {"order_id": "1", "issue_type": "account", "location": "Pune", "sentiment": "negative", "due_date": "2026-01-01"},
+         "gold": {"order_id": "1", "issue_type": "refund", "location": "Pune", "sentiment": "negative", "due_date": "2026-01-01"},
+         "is_valid": True},
+        {"parsed_json": {"order_id": "2", "issue_type": "account", "location": "Delhi", "sentiment": "neutral", "due_date": "2026-02-01"},
+         "gold": {"order_id": "2", "issue_type": "refund", "location": "Delhi", "sentiment": "neutral", "due_date": "2026-02-01"},
+         "is_valid": True},
+    ]
+    metrics = compute_metrics(rows)
+    assert metrics["issue_type_precision"] == 0.0
+    assert metrics["issue_type_recall"] == 0.0
+    assert metrics["issue_type_f1"] == 0.0
+    # the other four fields are perfect
+    assert metrics["order_id_f1"] == 1.0
+
+
 def test_compute_metrics_empty():
     assert compute_metrics([]) == {}
 

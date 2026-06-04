@@ -10,8 +10,11 @@ SAMPLE_DIR = RESULTS_DIR / "sample"
 
 
 def _savefig(name: str) -> Path:
-    RESULTS_DIR.mkdir(exist_ok=True)
-    path = RESULTS_DIR / name
+    # Charts are written to results/sample/ because .gitignore excludes
+    # results/*.png but allows results/sample/** — so these get committed and
+    # render in REPORT.md on GitHub.
+    SAMPLE_DIR.mkdir(parents=True, exist_ok=True)
+    path = SAMPLE_DIR / name
     plt.savefig(path, bbox_inches="tight", dpi=120)
     plt.close()
     return path
@@ -189,16 +192,16 @@ def write_report(
 ## Charts
 
 ### Accuracy (Macro F1) vs Estimated Cost
-![F1 vs Cost](results/f1_vs_cost.png)
+![F1 vs Cost](results/sample/f1_vs_cost.png)
 
 ### Latency p50 / p95 per Model
-![Latency](results/latency.png)
+![Latency](results/sample/latency.png)
 
 ### JSON Validity Rate
-![JSON Validity](results/json_validity.png)
+![JSON Validity](results/sample/json_validity.png)
 
 ### Macro F1 by Prompt Variant
-![F1 by Prompt](results/f1_by_prompt.png)
+![F1 by Prompt](results/sample/f1_by_prompt.png)
 
 ---
 

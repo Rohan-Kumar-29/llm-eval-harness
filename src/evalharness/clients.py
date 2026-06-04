@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import litellm
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 
 # Suppress litellm's verbose logging
 litellm.suppress_debug_info = True
@@ -20,15 +20,21 @@ class GenerationResult:
 
 
 def _is_retryable(exc: BaseException) -> bool:
+    """Only retry transient failures (rate limits, timeouts, upstream 5xx).
+
+    Permanent errors — bad API key, malformed request, unknown model — are not
+    retried, so we fail fast instead of burning four attempts and free-tier quota
+    on something that can never succeed.
+    """
     msg = str(exc).lower()
     return any(k in msg for k in ("rate limit", "429", "timeout", "overloaded", "503", "502"))
 
 
 @retry(
-    retry=retry_if_exception_type(Exception),
+    retry=retry_if_exception(_is_retryable),
     wait=wait_exponential(multiplier=1, min=2, max=30),
     stop=stop_after_attempt(4),
-    reraise=False,
+    reraise=True,
 )
 async def _call_litellm(model_id: str, messages: list, temperature: float) -> litellm.ModelResponse:
     return await litellm.acompletion(

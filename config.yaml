@@ -3,18 +3,20 @@ dataset_path: data/seed_dataset.jsonl
 human_quality_path: data/human_quality.jsonl
 
 models:
-  - id: gemini/gemini-2.5-flash
-    label: gemini-flash
   - id: groq/llama-3.3-70b-versatile
     label: llama-70b
+  - id: groq/llama-3.1-8b-instant
+    label: llama-8b-instant
+  - id: gemini/gemini-2.5-flash
+    label: gemini-flash
   - id: openrouter/meta-llama/llama-3.1-8b-instruct:free
     label: llama-8b-free
   # - id: ollama/llama3.1:8b    # uncomment for fully local runs
   #   label: llama-8b-local
 
 judge_model:
-  id: gemini/gemini-2.5-flash
-  label: judge-gemini
+  id: groq/llama-3.3-70b-versatile
+  label: judge-llama-70b
 
 prompts:
   - prompts/extract_v1.txt
@@ -23,8 +25,8 @@ prompts:
 run:
   temperature: 0.0
   max_examples: 80
-  concurrency: 4
+  concurrency: 2          # low concurrency keeps free-tier providers from rate-limiting
   repeats: 1
   cache: true
   smoke_test: false
-  judge_sample_size: 20   # number of examples to run through LLM judge (keeps quota low)
+  judge_sample_size: 30   # covers all human-labelled IDs (10) with margin; judged at concurrency 2
