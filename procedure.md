@@ -30,11 +30,11 @@ Updated after each phase.
 | `src/evalharness/aggregate.py` | Joins all scorer outputs into one summary table — **stub, filled in Phase 7** |
 | `src/evalharness/report.py` | Generates 4 charts and writes REPORT.md — **stub, filled in Phase 7** |
 | `src/evalharness/scorers/__init__.py` | Marks scorers as a sub-package |
-| `src/evalharness/scorers/deterministic.py` | Computes field-level F1, exact match, JSON validity — **stub, filled in Phase 6** |
-| `src/evalharness/scorers/judge.py` | LLM-as-judge scorer with rubric + reliability check — **stub, filled in Phase 6** |
-| `src/evalharness/scorers/operational.py` | Computes latency p50/p95 and estimated cost — **stub, filled in Phase 6** |
+| `src/evalharness/scorers/deterministic.py` | Computes field-level F1, exact match, JSON validity — ✅ implemented in Phase 6 |
+| `src/evalharness/scorers/judge.py` | LLM-as-judge scorer with rubric + reliability check — ✅ implemented in Phase 6 |
+| `src/evalharness/scorers/operational.py` | Computes latency p50/p95 and estimated cost — ✅ implemented in Phase 6 |
 | `tests/test_schema.py` | Unit tests for schema parsing and validation — ✅ implemented in Phase 3 |
-| `tests/test_deterministic.py` | Unit tests for F1/precision/recall scorer — **stub, filled in Phase 6** |
+| `tests/test_deterministic.py` | Unit tests for F1/precision/recall scorer — ✅ implemented in Phase 6 |
 | `tests/test_runner_cache.py` | Unit tests verifying cache short-circuits API calls — ✅ implemented in Phase 5 |
 | `dashboard/app.py` | Optional Streamlit dashboard for exploring results — **stub, filled in Phase 10** |
 | `prompts/extract_v1.txt` | First prompt template for the extraction task — ✅ implemented in Phase 2 |
@@ -87,15 +87,15 @@ Updated after each phase.
 
 ---
 
-## Phase 6 — Scorers (`commit: pending`)
+## Phase 6 — Scorers (`commit: b2e8ef0`)
 *Goal: All three scoring dimensions.*
 
-| File | Purpose |
-|---|---|
-| `src/evalharness/scorers/deterministic.py` | Per-field precision/recall/F1, full-record exact match, JSON validity rate |
-| `src/evalharness/scorers/operational.py` | Latency p50/p95 per model; estimated cost per 1,000 calls from token counts × prices.yaml |
-| `src/evalharness/scorers/judge.py` | Sends (input, gold, output) to judge model; returns 1–5 score + justification; computes MAE + Spearman vs human scores |
-| `tests/test_deterministic.py` | Tests: known (pred, gold) pairs produce expected P/R/F1 |
+| File | Purpose | Status |
+|---|---|---|
+| `src/evalharness/scorers/deterministic.py` | `score_record()` per-field exact match; `compute_metrics()` aggregates json_validity, exact_match_rate, per-field P/R/F1, macro_f1 across all rows | ✅ Implemented |
+| `src/evalharness/scorers/operational.py` | `compute_operational()` computes latency p50/p95 and estimated cost per 1,000 calls from avg token counts × prices.yaml published rates | ✅ Implemented |
+| `src/evalharness/scorers/judge.py` | `judge_single()` / `run_judge()` sends (input, gold, prediction) to judge model with rubric, returns 1–5 score + justification. `compute_judge_reliability()` gives MAE + Spearman vs human scores | ✅ Implemented |
+| `tests/test_deterministic.py` | 8 tests: perfect match, one wrong field, null pred, case-insensitive match, all correct metrics, all invalid, empty input, partial | ✅ 8/8 passing |
 
 ---
 
